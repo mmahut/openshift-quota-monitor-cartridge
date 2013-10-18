@@ -1,0 +1,12 @@
+#!/bin/bash
+source $OPENSHIFT_HOMEDIR/quotamonitor/lib/functions
+populate_env_vers
+
+event=$(evalute_quota)
+
+if [ "$event" != "OK" ]; then
+    if [ "$(( $(date +"%s") - $(stat -c "%Y" $OPENSHIFT_TMP_DIR/quota_monitor_sent.run) ))" -gt "$OPENSHIFT_QUOTAMONITOR_PERIOD" ]; then
+       quota -s | mail -s "${event}: Quota exceeded on ${OPENSHIFT_GEAR_DNS}" $OPENSHIFT_QUOTAMONITOR_MAIL
+       touch $OPENSHIFT_TMP_DIR/quota_monitor_sent.run
+    fi
+fi

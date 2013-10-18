@@ -1,0 +1,13 @@
+#!/bin/bash -e
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+source $OPENSHIFT_HOMEDIR/quotamonitor/lib/functions
+populate_env_vers
+
+client_result "Quota Monitor is now installed in your gear"
+if ! is_email_set; then
+	client_result ""
+	client_result "Please configure your notification mail address:"
+	client_result ""
+	client_result "    rhc set-env OPENSHIFT_QUOTAMONITOR_MAIL=admin@example.com -a $OPENSHIFT_APP_NAME"
+	client_result ""
+fi

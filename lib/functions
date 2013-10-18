@@ -1,0 +1,70 @@
+# vi: filetype=sh
+
+# source OpenShift environment variable into context
+function load_env {
+    [ -z "$1" ] && return 1
+    [ -f "$1" ] || return 0
+
+    local contents=$(< $1)
+    if [[ $contents =~ ^export\ .* ]]
+    then
+      source $1
+    else
+      local key=$(basename $1)
+      export $key=$(< $1)
+    fi  
+}
+
+# populate the user env variables
+function populate_env_vers() {
+        for f in ~/.env/* ~/.env/user_vars/* ~/*/env/*
+        do
+            load_env $f
+        done
+
+        [[ -z "$OPENSHIFT_QUOTAMONITOR_CRITICAL" ]] && export OPENSHIFT_QUOTAMONITOR_CRITICAL="95"
+        [[ -z "$OPENSHIFT_QUOTAMONITOR_WARNING" ]] && export OPENSHIFT_QUOTAMONITOR_WARNING="90"
+        [[ -z "$OPENSHIFT_QUOTAMONITOR_MAIL" ]] && export OPENSHIFT_QUOTAMONITOR_MAIL="dev-null@redhat.com"
+        [[ -z "$OPENSHIFT_QUOTAMONITOR_PERIOD" ]] && export OPENSHIFT_QUOTAMONITOR_PERIOD="300"
+}
+
+# returns the used space from quota command
+function get_used_space() {
+	used_space=$(quota -w|egrep -v '(quotas|Filesystem)'|awk -F ' ' '{ print $2}')
+	echo $used_space
+}
+
+# returns the total quota for your gear
+function get_quota() {
+	quota=$(quota -w|egrep -v '(quotas|Filesystem)'|awk -F ' ' '{ print $4}')
+	echo $quota
+}
+
+# returns the usage percentage
+function get_quota_percentage() {
+	used_space=$(get_used_space)
+	quota=$(get_quota)
+	percentage=$(echo "(${used_space}/${quota})*100" |bc -l|sed 's/^\./0./')
+	echo ${percentage/\.*}
+}
+
+# evalutate the quota with our monitoring setting and report the status
+function evalute_quota() {
+	quota=$(get_quota_percentage)
+	if [ "$quota" -gt "$OPENSHIFT_QUOTAMONITOR_CRITICAL" ]; then
+	 echo CRITICAL 
+	elif [ "$quota" -gt "$OPENSHIFT_QUOTAMONITOR_WARNING" ]; then
+	 echo WARNING
+	else
+	 echo OK
+	fi
+}
+
+# returns true is the end user changed the default email address
+function is_email_set(){
+	if [ "$OPENSHIFT_QUOTAMONITOR_MAIL" == "dev-null@redhat.com" ]; then
+	 return 1
+	else
+	 return 0
+	fi
+}

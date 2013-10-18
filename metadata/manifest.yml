@@ -1,0 +1,23 @@
+---
+Name: quotamonitor
+Cartridge-Short-Name: QUOTAMONITOR
+Display-Name: Quota Monitor
+Description: "A Cartridge to monitor your gear quota"
+Source-Url: https://github.com/mmahut/openshift-quota-monitor-cartridge.git
+Version: '1.0'
+License: ASL 2.0
+Vendor: mmahut
+Cartridge-Version: 1.0.0
+Cartridge-Vendor: mmahut
+Categories:
+  - embedded
+  - service
+Provides:
+  - quotamonitor-1.0
+  - "quotamonitor"
+Publishes:
+Subscribes:
+Endpoints:
+Scaling:
+  Min: 1
+  Max: -1

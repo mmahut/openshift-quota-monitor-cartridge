@@ -1,0 +1,65 @@
+#!/bin/bash
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+source $OPENSHIFT_HOMEDIR/quotamonitor/lib/functions
+populate_env_vers
+
+function start() {
+    client_result "Starting Quota Monitor cart"
+
+    if [[ -z "$OPENSHIFT_CRON_DIR" ]]; then
+         echo "WARNING: cron cartridge is not installed!"
+         exit
+    fi
+
+    if ! is_email_set; then
+        echo "WARNING: your notification mail is not set!"
+    fi
+
+    if [[ -h $OPENSHIFT_HOMEDIR/app-root/repo/.openshift/cron/minutely/quota_monitor ]]; then
+        echo "Quota Monitor is already running"
+    else
+        ln -s $OPENSHIFT_QUOTAMONITOR_DIR/bin/quota_monitor $OPENSHIFT_HOMEDIR/app-root/repo/.openshift/cron/minutely/quota_monitor && touch $OPENSHIFT_TMP_DIR/quota_monitor_sent.run
+   fi
+}
+
+function stop() {
+    client_result "Stopping Quota Monitor cart"
+    if [[ -h $OPENSHIFT_HOMEDIR/app-root/repo/.openshift/cron/minutely/quota_monitor ]]; then
+        rm $OPENSHIFT_HOMEDIR/app-root/repo/.openshift/cron/minutely/quota_monitor && rm $OPENSHIFT_TMP_DIR/quota_monitor_sent.run
+    else
+        echo "Quota Monitor is already stopped"
+   fi
+}
+
+function restart() {
+    client_result "Restarting Quota Monitor cart"
+    stop
+    start
+}
+
+function status() {
+   if [[ -h $OPENSHIFT_HOMEDIR/app-root/repo/.openshift/cron/minutely/quota_monitor ]]; then
+      client_result "Quota Monitor is running"
+   else
+      client_result "Quota Monitor is either stopped or inaccessible"
+   fi
+}
+
+function reload() {
+    client_result "Reloading Cron Monitor cart"
+    restart
+}
+
+function tidy() {
+  client_message "Nothing to tidy"
+}
+
+case "$1" in
+  start)     start ;;
+  stop)      stop ;;
+  restart)   restart ;;
+  status)    status ;;
+  reload)    reload ;;
+  tidy)      tidy ;;
+  *)         exit 0
+esac
